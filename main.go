@@ -34,6 +34,7 @@ func registerDB() error {
 	if err != nil {
 		return err
 	}
+	defer db.Close()
 	return nil
 }
 
