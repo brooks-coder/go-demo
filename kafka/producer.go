@@ -2,6 +2,7 @@ package kafka
 
 import (
 	"context"
+	"demo-to-start/common"
 	"encoding/base64"
 	"errors"
 	"github.com/Shopify/sarama"
@@ -12,12 +13,9 @@ import (
 )
 
 // 10.105.11.29:9092
-var (
-	producerClosed = 1
-)
 
-// KafkaProducerConfig 是 kafka producer 相关配置.
-type KafkaProducerConfig struct {
+// ProducerConfig 是 kafka producer 相关配置.
+type ProducerConfig struct {
 	Brokers           []string // 必须; kafka brokers
 	Version           string   // 可选; kafka 版本
 	ClientID          string   // 可选; 客户端标识
@@ -29,14 +27,13 @@ type KafkaProducerConfig struct {
 type kafkaProducer struct {
 	logMessage bool
 	producer   sarama.SyncProducer
-	closed     int
+	closed     common.Bool
 }
 
 func (impl *kafkaProducer) Close(ctx context.Context) error {
-	if impl.closed == producerClosed {
+	if !impl.closed.CompareAndSwap(false, true) {
 		return errors.New("the producer close method has been called")
 	}
-	impl.closed = producerClosed
 	if err := impl.producer.Close(); err != nil {
 		log.Println(ctx, "failed to close kafka producer", "error", err.Error())
 		return err
@@ -66,7 +63,7 @@ func (m *MessageType) String() string {
 type SendMessageOption func(*sendMessageOptions)
 
 func (impl *kafkaProducer) SendMessage(ctx context.Context, msgType MessageType, msg proto.Message, opts ...SendMessageOption) error {
-	if impl.closed == producerClosed {
+	if impl.closed.Load() {
 		return errors.New("the producer has been closed")
 	}
 
@@ -127,7 +124,7 @@ func (impl *kafkaProducer) SendMessage(ctx context.Context, msgType MessageType,
 // NewKafkaProducer 创建一个新的 kafka Producer.
 //
 // NOTE: 不要忘记调用 Producer.Close, 否则会有资源泄漏.
-func NewKafkaProducer(config KafkaProducerConfig) (Producer, error) {
+func NewKafkaProducer(config ProducerConfig) (Producer, error) {
 	if len(config.Brokers) == 0 {
 		return nil, errors.New("empty brokers")
 	}
