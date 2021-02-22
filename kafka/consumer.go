@@ -134,7 +134,7 @@ var (
 type kafkaConsumer struct {
 	consumerGroup sarama.ConsumerGroup
 
-	started common.Bool     // 是否已经启动
+	started common.Bool    // 是否已经启动
 	closed  common.Bool    // 是否已经关闭
 	closing chan struct{}  // 关闭信号
 	wg      sync.WaitGroup // 关闭之后的 sync.WaitGroup
@@ -180,7 +180,6 @@ func (impl *kafkaConsumer) StartConsumeMessage(ctx context.Context, handlers map
 			return nil
 		default:
 		}
-
 
 		err := impl.consumerGroup.Consume(ctx, topics, groupHandler)
 		if err != nil {
@@ -230,7 +229,7 @@ func (impl *consumerGroupHandler) handleMessage(msg *sarama.ConsumerMessage) err
 	// 查找 handler
 	handler, ok := impl.handlers[msgType]
 	if !ok || handler == nil {
-		log.Println( "not-found-handler", "msg-value", string(msg.Value))
+		log.Println("not-found-handler", "msg-value", string(msg.Value))
 		return nil // 忽略消息, 正常情况下不会出现
 	}
 
@@ -246,13 +245,7 @@ func (impl *consumerGroupHandler) handleMessage(msg *sarama.ConsumerMessage) err
 	// 处理消息
 	bizMsg := &Message{
 		Value: msgValue,
-		Kafka: struct {
-			Timestamp      time.Time
-			BlockTimestamp time.Time
-			Topic          string
-			Partition      int32
-			Offset         int64
-		}{
+		Kafka: MessageForKafka{
 			Timestamp:      msg.Timestamp,
 			BlockTimestamp: msg.BlockTimestamp,
 			Topic:          msg.Topic,
@@ -260,11 +253,10 @@ func (impl *consumerGroupHandler) handleMessage(msg *sarama.ConsumerMessage) err
 			Offset:         msg.Offset,
 		},
 	}
-	switch err := handler.ServeMessage(context.Background(), bizMsg); err {
-	case nil:
-		return nil
-	default:
+	err = handler.ServeMessage(context.Background(), bizMsg)
+	if err != nil {
 		log.Println("handle-kafka-message-bus-message-failed", "msg-value", string(msg.Value), "error", err.Error())
 		return err
 	}
+	return nil
 }

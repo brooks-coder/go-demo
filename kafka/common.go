@@ -46,28 +46,30 @@ type MessageHandler interface {
 	//  对于 kafka 消息总线如果返回错误消息则只是打印日志, 不会被再次消费到
 	ServeMessage(ctx context.Context, msg *Message) error
 }
+
 // Message 是消息数据结构
 type Message struct {
-	// Value 是具体消息的值
-	Value []byte
+	Value []byte          // 具体消息的值
+	MNS   MessageForMNS   // 阿里云mns消息总线特有的值
+	Kafka MessageForKafka // kafka消息总线特有的值
+}
 
-	// MNS 是阿里云 mns 消息总线特有的值
-	MNS struct {
-		MessageID        string // 消息编号，在一个Queue中唯一
-		EnqueueTime      int64  // 消息发送到队列的时间，从1970年1月1日0点整开始的毫秒数
-		FirstDequeueTime int64  // 第一次被消费的时间，从1970年1月1日0点整开始的毫秒数
-		DequeueCount     int    // 总共被消费的次数
-		Priority         int    // 消息的优先级权值
-	}
+// MessageForMNS mns消息
+type MessageForMNS struct {
+	MessageID        string // 消息编号，在一个Queue中唯一
+	EnqueueTime      int64  // 消息发送到队列的时间，从1970年1月1日0点整开始的毫秒数
+	FirstDequeueTime int64  // 第一次被消费的时间，从1970年1月1日0点整开始的毫秒数
+	DequeueCount     int    // 总共被消费的次数
+	Priority         int    // 消息的优先级权值
+}
 
-	// Kafka 是 kafka 消息总线特有的值
-	Kafka struct {
-		Timestamp      time.Time // only set if kafka is version 0.10+, inner message timestamp
-		BlockTimestamp time.Time // only set if kafka is version 0.10+, outer (compressed) block timestamp
-		Topic          string
-		Partition      int32
-		Offset         int64
-	}
+// MessageForKafka kafka消息
+type MessageForKafka struct {
+	Timestamp      time.Time // only set if kafka is version 0.10+, inner message timestamp
+	BlockTimestamp time.Time // only set if kafka is version 0.10+, outer (compressed) block timestamp
+	Topic          string
+	Partition      int32
+	Offset         int64
 }
 
 // ToJsonString json字符串

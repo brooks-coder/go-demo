@@ -7,8 +7,7 @@ import (
 type Bool uint32 // zero value represents false
 
 func (b *Bool) Load() (val bool) {
-	n := atomic.LoadUint32((*uint32)(b))
-	return n != 0
+	return atomic.LoadUint32((*uint32)(b)) != 0
 }
 
 func (b *Bool) Store(val bool) {
@@ -24,8 +23,7 @@ func (b *Bool) Swap(new bool) (old bool) {
 	if new {
 		_new = 1
 	}
-	_old := atomic.SwapUint32((*uint32)(b), _new)
-	return _old != 0
+	return atomic.SwapUint32((*uint32)(b), _new) != 0
 }
 
 func (b *Bool) CompareAndSwap(old, new bool) (swapped bool) {
