@@ -1,11 +1,24 @@
 package main
 
 import (
+	"container/list"
 	"demo-to-start/handlers"
 	"demo-to-start/mysql"
 	"log"
 	"net/http"
 )
+
+type LRUCache struct {
+	Cap  int
+	Keys map[int]*list.Element
+	List *list.List
+}
+
+type pair struct{ K, V int }
+
+func Constructor(capacity int) LRUCache {
+	return LRUCache{Cap: capacity, Keys: make(map[int]*list.Element), List: list.New()}
+}
 
 func main() {
 	log.SetFlags(log.Lshortfile)

@@ -3,7 +3,7 @@ package handlers
 import (
 	"demo-to-start/mysql"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 )
@@ -13,7 +13,7 @@ type QueryUserRequest struct {
 }
 // QueryUser 请求处理逻辑
 func QueryUser(w http.ResponseWriter, r *http.Request) {
-	bd, err := ioutil.ReadAll(r.Body)
+	bd, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Println(err)
 		return
